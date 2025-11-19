@@ -1,0 +1,157 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Chargement des données
+
+```{r load_data}
+library(dplyr)
+library(lubridate)
+library(stringr)
+
+df <- read.csv("games_cleaned.csv", stringsAsFactors = FALSE, encoding = "UTF-8")
+df$Release.date <- as.Date(df$Release.date)
+df$Year <- year(df$Release.date)
+```
+
+# 1. Statistiques descriptives générales
+
+```{r descriptive_stats}
+str(df)
+summary(df[, c("Price", "Metacritic.score", "User.score", "Positive", "Negative", "Average.playtime.forever")])
+```
+
+# 2. Analyse des prix
+
+```{r price_analysis}
+mean(df$Price, na.rm = TRUE)
+median(df$Price, na.rm = TRUE)
+min(df$Price, na.rm = TRUE)
+max(df$Price, na.rm = TRUE)
+sd(df$Price, na.rm = TRUE)
+sum(df$Price == 0, na.rm = TRUE)
+
+price_bins <- cut(df$Price, breaks = c(0, 10, 20, 30, 50, Inf), labels = c("Gratuit-10€", "10-20€", "20-30€", "30-50€", ">50€"))
+table(price_bins)
+```
+
+# 3. Analyse temporelle
+
+```{r temporal_analysis}
+df %>% group_by(Year) %>% 
+  summarise(Count = n(), Avg_Price = mean(Price, na.rm = TRUE), .groups = 'drop')
+```
+
+# 4. Analyse des scores
+
+```{r scores_analysis}
+mean(df$Metacritic.score, na.rm = TRUE)
+median(df$Metacritic.score, na.rm = TRUE)
+mean(df$User.score, na.rm = TRUE)
+median(df$User.score, na.rm = TRUE)
+
+valid_scores <- df %>% filter(!is.na(Metacritic.score) & !is.na(User.score))
+if(nrow(valid_scores) > 0) {
+  cor(valid_scores$Metacritic.score, valid_scores$User.score)
+}
+```
+
+# 5. Analyse des avis positifs/négatifs
+
+```{r reviews_analysis}
+df$Total_Reviews <- df$Positive + df$Negative
+df$Positive_Ratio <- df$Positive / (df$Positive + df$Negative)
+
+sum(df$Total_Reviews, na.rm = TRUE)
+mean(df$Positive_Ratio, na.rm = TRUE)
+sum(df$Positive_Ratio > 0.8, na.rm = TRUE)
+sum(df$Positive_Ratio < 0.5, na.rm = TRUE)
+
+df %>% arrange(desc(Total_Reviews)) %>% slice(1:10) %>% select(Name, Total_Reviews, Positive_Ratio)
+```
+
+# 6. Analyse des plateformes
+
+```{r platform_analysis}
+sum(df$Windows == TRUE, na.rm = TRUE)
+sum(df$Mac == TRUE, na.rm = TRUE)
+sum(df$Linux == TRUE, na.rm = TRUE)
+
+mean(df$Price[df$Windows == TRUE], na.rm = TRUE)
+mean(df$Price[df$Mac == TRUE], na.rm = TRUE)
+mean(df$Price[df$Linux == TRUE], na.rm = TRUE)
+```
+
+# 7. Analyse des langues
+
+```{r languages_analysis}
+df$Num_Languages <- sapply(strsplit(df$Supported.languages, ","), length)
+mean(df$Num_Languages, na.rm = TRUE)
+min(df$Num_Languages, na.rm = TRUE)
+max(df$Num_Languages, na.rm = TRUE)
+
+df$Has_Full_Audio <- !is.na(df$Full.audio.languages) & df$Full.audio.languages != ""
+sum(df$Has_Full_Audio)
+```
+
+# 8. Analyse du temps de jeu
+
+```{r playtime_analysis}
+mean(df$Average.playtime.forever, na.rm = TRUE)
+median(df$Average.playtime.forever, na.rm = TRUE)
+max(df$Average.playtime.forever, na.rm = TRUE)
+
+valid_playtime <- df %>% filter(!is.na(Average.playtime.forever) & !is.na(Price) & Price > 0)
+if(nrow(valid_playtime) > 0) {
+  cor(valid_playtime$Price, valid_playtime$Average.playtime.forever)
+}
+
+df %>% arrange(desc(Average.playtime.forever)) %>% slice(1:10) %>% select(Name, Average.playtime.forever, Price)
+```
+
+# 9. Analyse des développeurs/éditeurs
+
+```{r developers_analysis}
+devs <- strsplit(df$Developers, ",")
+dev_names <- unlist(devs)
+dev_names <- trimws(dev_names)
+dev_counts <- table(dev_names)
+sort(dev_counts, decreasing = TRUE)[1:10]
+```
+
+# 10. Analyse des recommandations
+
+```{r recommendations_analysis}
+mean(df$Recommendations, na.rm = TRUE)
+median(df$Recommendations, na.rm = TRUE)
+sum(df$Recommendations > 0, na.rm = TRUE)
+
+df %>% arrange(desc(Recommendations)) %>% slice(1:10) %>% select(Name, Recommendations, Price, User.score)
+```
+
+# 11. Analyse des catégories
+
+```{r categories_analysis}
+cats <- strsplit(df$Categories, ",")
+cat_names <- unlist(cats)
+cat_names <- trimws(cat_names)
+cat_counts <- table(cat_names)
+sort(cat_counts, decreasing = TRUE)[1:15]
+```
+
+# 12. Analyse comparative prix vs qualité
+
+```{r price_quality_analysis}
+df$Price_Category <- cut(df$Price, breaks = c(0, 10, 20, 50, Inf), labels = c("Budget", "Standard", "Premium", "Luxe"))
+
+df %>% 
+  filter(!is.na(Price_Category) & !is.na(Metacritic.score)) %>%
+  group_by(Price_Category) %>% 
+  summarise(
+    Avg_Metacritic = mean(Metacritic.score, na.rm = TRUE),
+    Avg_User_Score = mean(User.score, na.rm = TRUE),
+    Avg_Playtime = mean(Average.playtime.forever, na.rm = TRUE),
+    Count = n(),
+    .groups = 'drop'
+  )
+```
