@@ -57,7 +57,7 @@ games_by_year <- df %>% group_by(Year) %>%
   summarise(Count = n(), Avg_Price = mean(Price, na.rm = TRUE), .groups = 'drop')
 
 ggplot(games_by_year, aes(x = Year, y = Count)) +
-  geom_line(color = "steelblue", size = 1) +
+  geom_line(color = "steelblue", linewidth = 1) +
   geom_point(color = "steelblue", size = 3) +
   labs(title = "Nombre de jeux sortis par année", x = "Année", y = "Nombre de jeux") +
   theme_minimal()
@@ -72,6 +72,9 @@ ggplot(games_by_year, aes(x = Year, y = Avg_Price)) +
 # 4. Analyse des scores
 
 ```{r scores_analysis}
+df$Metacritic.score <- as.numeric(df$Metacritic.score)
+df$User.score <- as.numeric(df$User.score)
+
 mean(df$Metacritic.score, na.rm = TRUE)
 median(df$Metacritic.score, na.rm = TRUE)
 mean(df$User.score, na.rm = TRUE)
@@ -82,15 +85,21 @@ if(nrow(valid_scores) > 0) {
   cor(valid_scores$Metacritic.score, valid_scores$User.score)
 }
 
-ggplot(df, aes(x = Metacritic.score)) +
-  geom_histogram(bins = 30, fill = "purple", color = "black") +
-  labs(title = "Distribution des scores Metacritic", x = "Score", y = "Nombre de jeux") +
-  theme_minimal()
+df_meta <- df %>% filter(!is.na(Metacritic.score))
+if(nrow(df_meta) > 0) {
+  ggplot(df_meta, aes(x = Metacritic.score)) +
+    geom_histogram(bins = 30, fill = "purple", color = "black") +
+    labs(title = "Distribution des scores Metacritic", x = "Score", y = "Nombre de jeux") +
+    theme_minimal()
+}
 
-ggplot(df, aes(x = User.score)) +
-  geom_histogram(bins = 30, fill = "green", color = "black") +
-  labs(title = "Distribution des scores utilisateurs", x = "Score", y = "Nombre de jeux") +
-  theme_minimal()
+df_user <- df %>% filter(!is.na(User.score))
+if(nrow(df_user) > 0) {
+  ggplot(df_user, aes(x = User.score)) +
+    geom_histogram(bins = 30, fill = "green", color = "black") +
+    labs(title = "Distribution des scores utilisateurs", x = "Score", y = "Nombre de jeux") +
+    theme_minimal()
+}
 
 if(nrow(valid_scores) > 0) {
   ggplot(valid_scores, aes(x = Metacritic.score, y = User.score)) +
@@ -105,7 +114,7 @@ if(nrow(valid_scores) > 0) {
 
 ```{r reviews_analysis}
 df$Total_Reviews <- df$Positive + df$Negative
-df$Positive_Ratio <- df$Positive / (df$Positive + df$Negative)
+df$Positive_Ratio <- ifelse(df$Total_Reviews > 0, df$Positive / df$Total_Reviews, NA)
 
 sum(df$Total_Reviews, na.rm = TRUE)
 mean(df$Positive_Ratio, na.rm = TRUE)
@@ -114,7 +123,8 @@ sum(df$Positive_Ratio < 0.5, na.rm = TRUE)
 
 df %>% arrange(desc(Total_Reviews)) %>% slice(1:10) %>% select(Name, Total_Reviews, Positive_Ratio)
 
-ggplot(df, aes(x = Positive_Ratio)) +
+df_ratio <- df %>% filter(!is.na(Positive_Ratio))
+ggplot(df_ratio, aes(x = Positive_Ratio)) +
   geom_histogram(bins = 30, fill = "cyan", color = "black") +
   labs(title = "Distribution du ratio d'avis positifs", x = "Ratio positif", y = "Nombre de jeux") +
   theme_minimal()
