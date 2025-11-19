@@ -8,6 +8,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(dplyr)
 library(lubridate)
 library(stringr)
+library(ggplot2)
 
 df <- read.csv("games_cleaned.csv", stringsAsFactors = FALSE, encoding = "UTF-8")
 df$Release.date <- as.Date(df$Release.date)
@@ -33,13 +34,37 @@ sum(df$Price == 0, na.rm = TRUE)
 
 price_bins <- cut(df$Price, breaks = c(0, 10, 20, 30, 50, Inf), labels = c("Gratuit-10€", "10-20€", "20-30€", "30-50€", ">50€"))
 table(price_bins)
+
+ggplot(df, aes(x = Price)) +
+  geom_histogram(bins = 50, fill = "steelblue", color = "black") +
+  labs(title = "Distribution des prix", x = "Prix (€)", y = "Nombre de jeux") +
+  theme_minimal()
+
+ggplot(df, aes(x = price_bins, fill = price_bins)) +
+  geom_bar() +
+  labs(title = "Jeux par catégorie de prix", x = "Catégorie", y = "Nombre de jeux") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = "none")
 ```
 
 # 3. Analyse temporelle
 
 ```{r temporal_analysis}
-df %>% group_by(Year) %>% 
+games_by_year <- df %>% group_by(Year) %>% 
   summarise(Count = n(), Avg_Price = mean(Price, na.rm = TRUE), .groups = 'drop')
+
+ggplot(games_by_year, aes(x = Year, y = Count)) +
+  geom_line(color = "steelblue", size = 1) +
+  geom_point(color = "steelblue", size = 3) +
+  labs(title = "Nombre de jeux sortis par année", x = "Année", y = "Nombre de jeux") +
+  theme_minimal()
+
+ggplot(games_by_year, aes(x = Year, y = Avg_Price)) +
+  geom_line(color = "orange", size = 1) +
+  geom_point(color = "orange", size = 3) +
+  labs(title = "Prix moyen par année", x = "Année", y = "Prix moyen (€)") +
+  theme_minimal()
 ```
 
 # 4. Analyse des scores
@@ -53,6 +78,24 @@ median(df$User.score, na.rm = TRUE)
 valid_scores <- df %>% filter(!is.na(Metacritic.score) & !is.na(User.score))
 if(nrow(valid_scores) > 0) {
   cor(valid_scores$Metacritic.score, valid_scores$User.score)
+}
+
+ggplot(df, aes(x = Metacritic.score)) +
+  geom_histogram(bins = 30, fill = "purple", color = "black") +
+  labs(title = "Distribution des scores Metacritic", x = "Score", y = "Nombre de jeux") +
+  theme_minimal()
+
+ggplot(df, aes(x = User.score)) +
+  geom_histogram(bins = 30, fill = "green", color = "black") +
+  labs(title = "Distribution des scores utilisateurs", x = "Score", y = "Nombre de jeux") +
+  theme_minimal()
+
+if(nrow(valid_scores) > 0) {
+  ggplot(valid_scores, aes(x = Metacritic.score, y = User.score)) +
+    geom_point(alpha = 0.5, color = "red") +
+    geom_smooth(method = "lm", se = TRUE, color = "blue") +
+    labs(title = "Corrélation Metacritic vs User Score", x = "Score Metacritic", y = "Score Utilisateur") +
+    theme_minimal()
 }
 ```
 
@@ -68,6 +111,18 @@ sum(df$Positive_Ratio > 0.8, na.rm = TRUE)
 sum(df$Positive_Ratio < 0.5, na.rm = TRUE)
 
 df %>% arrange(desc(Total_Reviews)) %>% slice(1:10) %>% select(Name, Total_Reviews, Positive_Ratio)
+
+ggplot(df, aes(x = Positive_Ratio)) +
+  geom_histogram(bins = 30, fill = "cyan", color = "black") +
+  labs(title = "Distribution du ratio d'avis positifs", x = "Ratio positif", y = "Nombre de jeux") +
+  theme_minimal()
+
+top_reviewed <- df %>% arrange(desc(Total_Reviews)) %>% slice(1:15)
+ggplot(top_reviewed, aes(x = reorder(Name, Total_Reviews), y = Total_Reviews)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top 15 jeux les plus commentés", x = "Jeu", y = "Nombre d'avis") +
+  theme_minimal()
 ```
 
 # 6. Analyse des plateformes
@@ -80,6 +135,36 @@ sum(df$Linux == TRUE, na.rm = TRUE)
 mean(df$Price[df$Windows == TRUE], na.rm = TRUE)
 mean(df$Price[df$Mac == TRUE], na.rm = TRUE)
 mean(df$Price[df$Linux == TRUE], na.rm = TRUE)
+
+platforms <- data.frame(
+  Plateforme = c("Windows", "Mac", "Linux"),
+  Count = c(
+    sum(df$Windows == TRUE, na.rm = TRUE),
+    sum(df$Mac == TRUE, na.rm = TRUE),
+    sum(df$Linux == TRUE, na.rm = TRUE)
+  )
+)
+
+ggplot(platforms, aes(x = Plateforme, y = Count, fill = Plateforme)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Nombre de jeux par plateforme", x = "Plateforme", y = "Nombre de jeux") +
+  theme_minimal() +
+  guides(fill = "none")
+
+platform_price <- data.frame(
+  Plateforme = c("Windows", "Mac", "Linux"),
+  Prix_Moyen = c(
+    mean(df$Price[df$Windows == TRUE], na.rm = TRUE),
+    mean(df$Price[df$Mac == TRUE], na.rm = TRUE),
+    mean(df$Price[df$Linux == TRUE], na.rm = TRUE)
+  )
+)
+
+ggplot(platform_price, aes(x = Plateforme, y = Prix_Moyen, fill = Plateforme)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Prix moyen par plateforme", x = "Plateforme", y = "Prix (€)") +
+  theme_minimal() +
+  guides(fill = "none")
 ```
 
 # 7. Analyse des langues
@@ -107,6 +192,22 @@ if(nrow(valid_playtime) > 0) {
 }
 
 df %>% arrange(desc(Average.playtime.forever)) %>% slice(1:10) %>% select(Name, Average.playtime.forever, Price)
+
+ggplot(df, aes(x = Average.playtime.forever)) +
+  geom_histogram(bins = 50, fill = "brown", color = "black") +
+  xlim(0, 500) +
+  labs(title = "Distribution du temps de jeu moyen", x = "Heures", y = "Nombre de jeux") +
+  theme_minimal()
+
+if(nrow(valid_playtime) > 0) {
+  ggplot(valid_playtime, aes(x = Price, y = Average.playtime.forever)) +
+    geom_point(alpha = 0.5, color = "darkblue") +
+    geom_smooth(method = "lm", se = TRUE, color = "red") +
+    xlim(0, 100) +
+    ylim(0, 500) +
+    labs(title = "Corrélation Prix vs Temps de jeu", x = "Prix (€)", y = "Temps de jeu (h)") +
+    theme_minimal()
+}
 ```
 
 # 9. Analyse des développeurs/éditeurs
@@ -136,7 +237,19 @@ cats <- strsplit(df$Categories, ",")
 cat_names <- unlist(cats)
 cat_names <- trimws(cat_names)
 cat_counts <- table(cat_names)
-sort(cat_counts, decreasing = TRUE)[1:15]
+top_cats <- sort(cat_counts, decreasing = TRUE)[1:15]
+
+top_categories <- data.frame(
+  Category = names(top_cats),
+  Count = as.numeric(top_cats)
+)
+
+ggplot(top_categories, aes(x = reorder(Category, Count), y = Count, fill = Category)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Top 15 catégories les plus représentées", x = "Catégorie", y = "Nombre de jeux") +
+  theme_minimal() +
+  guides(fill = "none")
 ```
 
 # 12. Analyse comparative prix vs qualité
@@ -144,7 +257,7 @@ sort(cat_counts, decreasing = TRUE)[1:15]
 ```{r price_quality_analysis}
 df$Price_Category <- cut(df$Price, breaks = c(0, 10, 20, 50, Inf), labels = c("Budget", "Standard", "Premium", "Luxe"))
 
-df %>% 
+price_quality <- df %>% 
   filter(!is.na(Price_Category) & !is.na(Metacritic.score)) %>%
   group_by(Price_Category) %>% 
   summarise(
@@ -154,4 +267,16 @@ df %>%
     Count = n(),
     .groups = 'drop'
   )
+
+ggplot(price_quality, aes(x = Price_Category, y = Avg_Metacritic, fill = Price_Category)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Score Metacritic moyen par catégorie de prix", x = "Catégorie", y = "Score") +
+  theme_minimal() +
+  guides(fill = "none")
+
+ggplot(price_quality, aes(x = Price_Category, y = Avg_Playtime, fill = Price_Category)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Temps de jeu moyen par catégorie de prix", x = "Catégorie", y = "Heures") +
+  theme_minimal() +
+  guides(fill = "none")
 ```
