@@ -32,15 +32,17 @@ max(df$Price, na.rm = TRUE)
 sd(df$Price, na.rm = TRUE)
 sum(df$Price == 0, na.rm = TRUE)
 
-price_bins <- cut(df$Price, breaks = c(0, 10, 20, 30, 50, Inf), labels = c("Gratuit-10€", "10-20€", "20-30€", "30-50€", ">50€"))
-table(price_bins)
-
 ggplot(df, aes(x = Price)) +
   geom_histogram(bins = 50, fill = "steelblue", color = "black") +
+  xlim(0, 100) +
   labs(title = "Distribution des prix", x = "Prix (€)", y = "Nombre de jeux") +
   theme_minimal()
 
-ggplot(df, aes(x = price_bins, fill = price_bins)) +
+price_bins <- cut(df$Price, breaks = c(0, 10, 20, 30, 50, Inf), labels = c("Gratuit-10€", "10-20€", "20-30€", "30-50€", ">50€"))
+price_bin_df <- data.frame(Category = price_bins)
+price_bin_df <- price_bin_df %>% filter(!is.na(Category))
+
+ggplot(price_bin_df, aes(x = Category, fill = Category)) +
   geom_bar() +
   labs(title = "Jeux par catégorie de prix", x = "Catégorie", y = "Nombre de jeux") +
   theme_minimal() +
