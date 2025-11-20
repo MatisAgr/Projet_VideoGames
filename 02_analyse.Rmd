@@ -314,3 +314,93 @@ if(nrow(price_quality) > 0) {
     guides(fill = "none")
 }
 ```
+
+# 13. Analyse des éditeurs
+
+```{r publishers_analysis}
+df_pub <- df %>% filter(!is.na(Publishers))
+
+pubs <- strsplit(df_pub$Publishers, ",")
+pub_names <- unlist(pubs)
+pub_names <- trimws(pub_names)
+pub_counts <- table(pub_names)
+top_pubs <- sort(pub_counts, decreasing = TRUE)[1:10]
+
+top_publishers <- data.frame(
+  Publisher = names(top_pubs),
+  Count = as.numeric(top_pubs)
+)
+
+ggplot(top_publishers, aes(x = reorder(Publisher, Count), y = Count, fill = Publisher)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top 10 éditeurs par nombre de jeux", x = "Éditeur", y = "Nombre de jeux") +
+  theme_minimal() +
+  guides(fill = "none")
+```
+
+# 14. Distribution des évaluations Metacritic vs User Score
+
+```{r score_comparison}
+df_score <- df %>% filter(!is.na(Metacritic.score) & !is.na(User.score))
+
+score_bins <- data.frame(
+  Metacritic = cut(df_score$Metacritic.score, breaks = seq(0, 100, 10)),
+  User = cut(df_score$User.score, breaks = seq(0, 100, 10))
+)
+score_bins <- score_bins %>% filter(!is.na(Metacritic) & !is.na(User))
+
+score_comparison <- score_bins %>%
+  group_by(Metacritic) %>%
+  summarise(Count = n(), .groups = 'drop')
+
+if(nrow(score_comparison) > 0) {
+  ggplot(score_comparison, aes(x = Metacritic, y = Count, fill = Metacritic)) +
+    geom_bar(stat = "identity") +
+    labs(title = "Distribution des scores Metacritic par groupes", x = "Gamme de scores", y = "Nombre de jeux") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    guides(fill = "none")
+}
+```
+
+# 15. Analyse des plates-formes par année
+
+```{r platform_timeline}
+df_plat_time <- df %>% filter(!is.na(Year) & (!is.na(Windows) | !is.na(Mac) | !is.na(Linux)))
+
+platform_by_year <- df_plat_time %>%
+  filter(Year >= 2010) %>%
+  group_by(Year) %>%
+  summarise(
+    Windows_Count = sum(Windows == TRUE, na.rm = TRUE),
+    Mac_Count = sum(Mac == TRUE, na.rm = TRUE),
+    Linux_Count = sum(Linux == TRUE, na.rm = TRUE),
+    .groups = 'drop'
+  )
+
+if(nrow(platform_by_year) > 0) {
+  ggplot(platform_by_year, aes(x = Year)) +
+    geom_line(aes(y = Windows_Count, color = "Windows"), linewidth = 1) +
+    geom_line(aes(y = Mac_Count, color = "Mac"), linewidth = 1) +
+    geom_line(aes(y = Linux_Count, color = "Linux"), linewidth = 1) +
+    labs(title = "Évolution du nombre de jeux par plateforme (depuis 2010)", x = "Année", y = "Nombre de jeux", color = "Plateforme") +
+    theme_minimal()
+}
+```
+
+# 16. Analyse de la qualité vs popularité
+
+```{r quality_vs_popularity}
+df_qvp <- df %>% filter(!is.na(Metacritic.score) & !is.na(Average.playtime.forever) & Average.playtime.forever > 0)
+
+if(nrow(df_qvp) > 0) {
+  ggplot(df_qvp, aes(x = Metacritic.score, y = Average.playtime.forever, color = Price)) +
+    geom_point(alpha = 0.4, size = 2) +
+    geom_smooth(method = "lm", se = FALSE, color = "red", linewidth = 1) +
+    ylim(0, 1000) +
+    labs(title = "Score Metacritic vs Temps de jeu moyen", x = "Score Metacritic", y = "Temps de jeu moyen (heures)", color = "Prix (€)") +
+    theme_minimal() +
+    scale_color_gradient(low = "lightgreen", high = "darkred")
+}
+```
