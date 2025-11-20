@@ -32,8 +32,68 @@ ui <- navbarPage(
   tags$head(
     tags$script(src = "https://cdn.tailwindcss.com"),
     tags$style(HTML("
+      html, body { @apply bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
       * { @apply transition-colors duration-200; }
-      body { @apply bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+      
+      .navbar-static-top {
+        background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%) !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        padding: 0.75rem 0 !important;
+      }
+      
+      .navbar {
+        background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%) !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        padding: 0.75rem 0 !important;
+      }
+      
+      .navbar-brand {
+        font-size: 1.25rem !important;
+        font-weight: 700 !important;
+        color: #1e293b !important;
+        text-decoration: none !important;
+        letter-spacing: -0.5px !important;
+      }
+      
+      .navbar-nav {
+        margin-left: auto !important;
+      }
+      
+      .nav-tabs {
+        border-bottom: 0 !important;
+        gap: 0.5rem !important;
+        padding: 0 1rem !important;
+      }
+      
+      .nav-tabs .nav-link {
+        background-color: transparent !important;
+        color: #64748b !important;
+        border: 0 !important;
+        border-radius: 0.75rem !important;
+        padding: 0.5rem 1rem !important;
+        font-weight: 500 !important;
+        transition: all 0.3s ease !important;
+        position: relative !important;
+      }
+      
+      .nav-tabs .nav-link:hover {
+        background-color: rgba(59, 130, 246, 0.1) !important;
+        color: #1e40af !important;
+      }
+      
+      .nav-tabs .nav-link.active {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+        color: #1e40af !important;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;
+        border-radius: 0.75rem !important;
+      }
+      
+      .tab-content {
+        background: transparent !important;
+      }
+      
       .sidebar-panel { @apply bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200; }
       .main-panel { @apply bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200; }
       .stat-panel { @apply bg-gradient-to-br from-slate-100 to-blue-100 text-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 hover:shadow-md; }
@@ -61,15 +121,13 @@ ui <- navbarPage(
     div(class = "min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-8",
       div(class = "max-w-7xl mx-auto",
         div(class = "page-header", h1("Dashboard Jeux Video")),
-        div(class = "grid grid-cols-1 lg:grid-cols-2 gap-8",
-          div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200",
-            h3(class = "section-title", "Top 10 - Meilleures critiques"),
-            DTOutput("top_10_table")
-          ),
-          div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200",
-            h3(class = "section-title", "Bottom 10 - Moins bonnes critiques"),
-            DTOutput("bottom_10_table")
-          )
+        div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200 mb-8",
+          h3(class = "section-title", "Top 10 - Meilleures critiques"),
+          DTOutput("top_10_table")
+        ),
+        div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200",
+          h3(class = "section-title", "Bottom 10 - Moins bonnes critiques"),
+          DTOutput("bottom_10_table")
         )
       )
     )
