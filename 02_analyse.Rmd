@@ -248,14 +248,16 @@ sort(dev_counts, decreasing = TRUE)[1:10]
 
 # 10. Analyse des recommandations
 
-```{r recommendations_analysis}
-df_reco <- df %>% filter(!is.na(Recommendations))
+```{r reviews_count_analysis}
+df_total <- df %>% filter(!is.na(Positive) & !is.na(Negative))
 
-mean(df_reco$Recommendations, na.rm = TRUE)
-median(df_reco$Recommendations, na.rm = TRUE)
-sum(df_reco$Recommendations > 0, na.rm = TRUE)
+df_total$Total_Reviews <- df_total$Positive + df_total$Negative
 
-df_reco %>% arrange(desc(Recommendations)) %>% slice(1:10) %>% select(Name, Recommendations, Price, User.score)
+mean(df_total$Total_Reviews, na.rm = TRUE)
+median(df_total$Total_Reviews, na.rm = TRUE)
+sum(df_total$Total_Reviews > 0, na.rm = TRUE)
+
+df_total %>% arrange(desc(Total_Reviews)) %>% slice(1:10) %>% select(Name, Total_Reviews, Price, User.score)
 ```
 
 # 11. Analyse des catégories
@@ -339,32 +341,7 @@ ggplot(top_publishers, aes(x = reorder(Publisher, Count), y = Count, fill = Publ
   guides(fill = "none")
 ```
 
-# 14. Distribution des évaluations Metacritic vs User Score
-
-```{r score_comparison}
-df_score <- df %>% filter(!is.na(Metacritic.score) & !is.na(User.score))
-
-score_bins <- data.frame(
-  Metacritic = cut(df_score$Metacritic.score, breaks = seq(0, 100, 10)),
-  User = cut(df_score$User.score, breaks = seq(0, 100, 10))
-)
-score_bins <- score_bins %>% filter(!is.na(Metacritic) & !is.na(User))
-
-score_comparison <- score_bins %>%
-  group_by(Metacritic) %>%
-  summarise(Count = n(), .groups = 'drop')
-
-if(nrow(score_comparison) > 0) {
-  ggplot(score_comparison, aes(x = Metacritic, y = Count, fill = Metacritic)) +
-    geom_bar(stat = "identity") +
-    labs(title = "Distribution des scores Metacritic par groupes", x = "Gamme de scores", y = "Nombre de jeux") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    guides(fill = "none")
-}
-```
-
-# 15. Analyse des plates-formes par année
+# 14. Analyse des plates-formes par année
 
 ```{r platform_timeline}
 df_plat_time <- df %>% filter(!is.na(Year) & (!is.na(Windows) | !is.na(Mac) | !is.na(Linux)))
@@ -389,7 +366,7 @@ if(nrow(platform_by_year) > 0) {
 }
 ```
 
-# 16. Analyse de la qualité vs popularité
+# 15. Analyse de la qualité vs popularité
 
 ```{r quality_vs_popularity}
 df_qvp <- df %>% filter(!is.na(Metacritic.score) & !is.na(Average.playtime.forever) & Average.playtime.forever > 0)
