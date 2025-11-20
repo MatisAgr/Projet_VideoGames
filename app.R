@@ -7,7 +7,7 @@ library(ggplot2)
 library(mongolite)
 library(lubridate)
 
-# --- CONFIGURATION MONGODB ---
+# CONFIGURATION MONGODB
 MONGO_URL <- "mongodb://localhost:27017"
 DB_NAME <- "steam_data"
 COLLECTION_NAME <- "games"
@@ -26,66 +26,96 @@ get_games_data <- function() {
 games_data <- get_games_data()
 
 ui <- navbarPage(
-  "🎮 Dashboard Jeux Vidéo",
+  "Dashboard Jeux Video",
   theme = NULL,
   useShinyjs(),
   tags$head(
     tags$script(src = "https://cdn.tailwindcss.com"),
     tags$style(HTML("
-      body { @apply bg-gray-100; }
-      .sidebar-panel { @apply bg-white p-6 rounded-lg shadow-md; }
-      .main-panel { @apply bg-white p-6 rounded-lg shadow-md; }
-      .stat-panel { @apply bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-md; }
-      .stat-panel h5 { @apply text-sm font-semibold opacity-90; }
-      .stat-panel-content { @apply text-2xl font-bold mt-2; }
-      .section-title { @apply text-2xl font-bold text-gray-800 mb-4; }
-      .filter-section h4 { @apply text-lg font-bold text-gray-800 mb-4; }
-      table { @apply w-full; }
-      .page-header { @apply bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-lg shadow-md mb-6; }
-      .page-header h1 { @apply text-3xl font-bold m-0; }
+      * { @apply transition-colors duration-200; }
+      body { @apply bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+      .sidebar-panel { @apply bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200; }
+      .main-panel { @apply bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200; }
+      .stat-panel { @apply bg-gradient-to-br from-slate-100 to-blue-100 text-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 hover:shadow-md; }
+      .stat-panel h5 { @apply text-sm font-semibold text-slate-600 uppercase tracking-wide; }
+      .stat-panel-content { @apply text-3xl font-bold mt-2 text-slate-900; }
+      .section-title { @apply text-2xl font-bold text-slate-800 mb-6; }
+      .filter-section h4 { @apply text-lg font-bold text-slate-700 mb-6; }
+      .page-header { @apply bg-gradient-to-r from-slate-200 via-blue-200 to-slate-200 text-slate-800 p-8 rounded-3xl shadow-sm border border-slate-300 mb-8; }
+      .page-header h1 { @apply text-4xl font-bold m-0; }
+      table { @apply w-full text-sm; }
+      .dataTables_wrapper { @apply text-slate-700; }
+      .dataTables_paginate { @apply mt-4; }
+      .paginate_button { @apply px-3 py-1 rounded-xl border border-slate-300 bg-white hover:bg-blue-50 text-slate-700; }
+      .paginate_button.current { @apply bg-blue-200 border-blue-300 text-slate-800 font-semibold; }
+      input[type='text'], input[type='number'], input[type='date'], select { @apply w-full px-4 py-2 rounded-xl border border-slate-300 bg-white/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent; }
+      input[type='range'] { @apply w-full accent-blue-300; }
+      button { @apply rounded-xl font-semibold transition-all duration-200; }
+      .bg-blue-600 { @apply bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white shadow-sm; }
+      .bg-green-600 { @apply bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white shadow-sm; }
+      .bg-gray-600 { @apply bg-gradient-to-r from-slate-400 to-slate-500 hover:from-slate-500 hover:to-slate-600 text-white shadow-sm; }
     "))
   ),
   
   tabPanel("Accueil",
-    div(class = "min-h-screen bg-gray-100 p-6",
-      div(class = "max-w-full mx-auto",
-        div(class = "page-header", h1("🎮 Dashboard Jeux Vidéo")),
-        div(class = "bg-white p-6 rounded-lg shadow-md mb-6",
-          h3(class = "section-title", "⭐ Top 10 - Meilleures critiques"),
-          DTOutput("top_10_table")
-        ),
-        div(class = "bg-white p-6 rounded-lg shadow-md",
-          h3(class = "section-title", "📉 Bottom 10 - Moins bonnes critiques"),
-          DTOutput("bottom_10_table")
+    div(class = "min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-8",
+      div(class = "max-w-7xl mx-auto",
+        div(class = "page-header", h1("Dashboard Jeux Video")),
+        div(class = "grid grid-cols-1 lg:grid-cols-2 gap-8",
+          div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200",
+            h3(class = "section-title", "Top 10 - Meilleures critiques"),
+            DTOutput("top_10_table")
+          ),
+          div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200",
+            h3(class = "section-title", "Bottom 10 - Moins bonnes critiques"),
+            DTOutput("bottom_10_table")
+          )
         )
       )
     )
   ),
   
-  tabPanel("Données & Filtres",
-    div(class = "min-h-screen bg-gray-100 p-6",
-      div(class = "max-w-full mx-auto",
-        div(class = "page-header", h1("🎮 Données & Statistiques")),
-        div(class = "grid grid-cols-1 xl:grid-cols-5 gap-6",
+  tabPanel("Donnees & Filtres",
+    div(class = "min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-8",
+      div(class = "max-w-7xl mx-auto",
+        div(class = "page-header", h1("Donnees & Statistiques")),
+        div(class = "grid grid-cols-1 xl:grid-cols-5 gap-8",
           div(class = "xl:col-span-1",
-            div(class = "sidebar-panel",
+            div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200",
               div(class = "filter-section",
-                h4("Filtrer les données"),
-                div(class = "mb-4", sliderInput("price_filter", "Prix maximum ($)", min = 0, max = max(games_data$Price, na.rm = TRUE), value = max(games_data$Price, na.rm = TRUE))),
-                div(class = "mb-4", sliderInput("score_filter", "Score Metacritic minimum", min = 0, max = 100, value = 0)),
-                div(class = "mb-4", selectInput("platform_filter", "Plateforme", choices = c("Tous" = "all", "Windows" = "windows", "Mac" = "mac", "Linux" = "linux"))),
-                div(class = "mb-4", actionButton("btn_refresh", "Actualiser", class = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg")),
-                hr(class = "my-4 border-gray-300"),
-                div(class = "text-sm text-gray-600", p("Données depuis MongoDB"))
+                h4("Filtrer les donnees"),
+                div(class = "mb-5",
+                  h5(class = "text-sm font-semibold text-slate-600 mb-2", "Prix maximum"),
+                  sliderInput("price_filter", NULL, min = 0, max = max(games_data$Price, na.rm = TRUE), value = max(games_data$Price, na.rm = TRUE))
+                ),
+                div(class = "mb-5",
+                  h5(class = "text-sm font-semibold text-slate-600 mb-2", "Score Metacritic"),
+                  sliderInput("score_filter", NULL, min = 0, max = 100, value = 0)
+                ),
+                div(class = "mb-5",
+                  h5(class = "text-sm font-semibold text-slate-600 mb-2", "Plateforme"),
+                  selectInput("platform_filter", NULL, choices = c("Tous" = "all", "Windows" = "windows", "Mac" = "mac", "Linux" = "linux"))
+                ),
+                div(class = "mb-2", actionButton("btn_refresh", "Actualiser", class = "w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg")),
+                hr(class = "my-4 border-slate-300"),
+                div(class = "text-xs text-slate-500", p("Donnees depuis MongoDB"))
               )
             )
           ),
           div(class = "xl:col-span-4",
-            div(class = "main-panel mb-6",
-              h3(class = "section-title", "Données en temps réel"),
-              p(class = "text-gray-600 mb-4", "Jeux vidéo filtrés :"),
-              DTOutput("games_table")
-            ),
+            div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200",
+              div(class = "main-panel mb-8",
+              h3(class = "section-title", "Donnees en temps reel"),
+              p(class = "text-slate-600 mb-6 font-medium", "Jeux video filtres :"),
+              div(class = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6",
+                textInput("search_name", "Rechercher par Nom", placeholder = "Nom du jeu..."),
+                textInput("search_developers", "Rechercher par Developpeur", placeholder = "Developpeur..."),
+                textInput("search_publishers", "Rechercher par Editeur", placeholder = "Editeur..."),
+                textInput("search_categories", "Rechercher par Categorie", placeholder = "Categorie...")
+              ),
+              div(style = "overflow-x: auto; overflow-y: auto; max-height: 600px; border: 1px solid #e2e8f0; border-radius: 1.5rem; background: white;",
+                DTOutput("games_table")
+              ),
             div(
               h4(class = "section-title", "Statistiques"),
               div(class = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4",
@@ -96,113 +126,115 @@ ui <- navbarPage(
               )
             )
           )
+            )
+          )
         )
       )
     )
   ),
   
   tabPanel("Graphiques & Analyses",
-    div(class = "min-h-screen bg-gray-100 p-6",
-      div(class = "max-w-full mx-auto",
-        div(class = "page-header", h1("📊 Graphiques & Analyses")),
-        div(class = "grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6",
-          div(class = "main-panel", h4(class = "section-title", "Distribution des prix"), plotOutput("plot_price_dist")),
-          div(class = "main-panel", h4(class = "section-title", "Distribution Metacritic"), plotOutput("plot_metacritic_dist"))
+    div(class = "min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-8",
+      div(class = "max-w-7xl mx-auto",
+        div(class = "page-header", h1("Graphiques & Analyses")),
+        div(class = "grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8",
+        div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200", h4(class = "section-title", "Distribution des prix"), plotOutput("plot_price_dist")),
+          div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200", h4(class = "section-title", "Distribution Metacritic"), plotOutput("plot_metacritic_dist"))
         ),
-        div(class = "grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6",
-          div(class = "main-panel", h4(class = "section-title", "Jeux par année"), plotOutput("plot_games_by_year")),
-          div(class = "main-panel", h4(class = "section-title", "Prix par année"), plotOutput("plot_price_by_year"))
+        div(class = "grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8",
+          div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200", h4(class = "section-title", "Jeux par annee"), plotOutput("plot_games_by_year")),
+          div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200", h4(class = "section-title", "Prix par annee"), plotOutput("plot_price_by_year"))
         ),
-        div(class = "grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6",
-          div(class = "main-panel", h4(class = "section-title", "Jeux par plateforme"), plotOutput("plot_platform_count")),
-          div(class = "main-panel", h4(class = "section-title", "Prix par plateforme"), plotOutput("plot_platform_price"))
+        div(class = "grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8",
+          div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200", h4(class = "section-title", "Jeux par plateforme"), plotOutput("plot_platform_count")),
+          div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200", h4(class = "section-title", "Prix par plateforme"), plotOutput("plot_platform_price"))
         ),
-        div(class = "main-panel mb-6", h4(class = "section-title", "Top 15 catégories"), plotOutput("plot_top_categories", height = "500px")),
-        div(class = "grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6",
-          div(class = "main-panel", h4(class = "section-title", "Metacritic vs User Score"), plotOutput("plot_score_correlation")),
-          div(class = "main-panel", h4(class = "section-title", "Prix vs Temps de jeu"), plotOutput("plot_price_playtime"))
+        div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200 mb-8", h4(class = "section-title", "Top 15 categories"), plotOutput("plot_top_categories", height = "500px")),
+        div(class = "grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8",
+          div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200", h4(class = "section-title", "Metacritic vs User Score"), plotOutput("plot_score_correlation")),
+          div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200", h4(class = "section-title", "Prix vs Temps de jeu"), plotOutput("plot_price_playtime"))
         ),
-        div(class = "main-panel", h4(class = "section-title", "Top 10 éditeurs"), plotOutput("plot_top_publishers", height = "500px"))
+        div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200", h4(class = "section-title", "Top 10 editeurs"), plotOutput("plot_top_publishers", height = "500px"))
       )
     )
   ),
   
   tabPanel("Ajouter un jeu",
-    div(class = "min-h-screen bg-gray-100 p-6",
+    div(class = "min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-8",
       div(class = "max-w-4xl mx-auto",
-        div(class = "page-header", h1("➕ Ajouter un nouveau jeu")),
-        div(class = "bg-white p-8 rounded-lg shadow-md",
+        div(class = "page-header", h1("Ajouter un nouveau jeu")),
+        div(class = "bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-slate-200",
           div(class = "grid grid-cols-1 md:grid-cols-2 gap-6 mb-6",
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "AppID"),
+              h4(class = "font-bold text-slate-700 mb-2", "AppID"),
               numericInput("form_appid", NULL, value = 1)
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Name"),
+              h4(class = "font-bold text-slate-700 mb-2", "Name"),
               textInput("form_name", NULL, placeholder = "Nom du jeu")
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Release date"),
+              h4(class = "font-bold text-slate-700 mb-2", "Release date"),
               dateInput("form_release", NULL)
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Price ($)"),
+              h4(class = "font-bold text-slate-700 mb-2", "Price ($)"),
               numericInput("form_price", NULL, value = 0)
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Supported languages"),
+              h4(class = "font-bold text-slate-700 mb-2", "Supported languages"),
               textInput("form_languages", NULL, placeholder = "Exemple: English, French")
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Developers"),
-              textInput("form_developers", NULL, placeholder = "Nom du/des développeur(s)")
+              h4(class = "font-bold text-slate-700 mb-2", "Developers"),
+              textInput("form_developers", NULL, placeholder = "Nom du/des developpeur(s)")
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Publishers"),
-              textInput("form_publishers", NULL, placeholder = "Nom du/des éditeur(s)")
+              h4(class = "font-bold text-slate-700 mb-2", "Publishers"),
+              textInput("form_publishers", NULL, placeholder = "Nom du/des editeur(s)")
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Categories"),
+              h4(class = "font-bold text-slate-700 mb-2", "Categories"),
               textInput("form_categories", NULL, placeholder = "Exemple: Single-player, Multiplayer")
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Metacritic score"),
+              h4(class = "font-bold text-slate-700 mb-2", "Metacritic score"),
               numericInput("form_metacritic", NULL, value = 0, min = 0, max = 100)
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "User score"),
+              h4(class = "font-bold text-slate-700 mb-2", "User score"),
               numericInput("form_user_score", NULL, value = 0, min = 0, max = 10)
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Positive reviews"),
+              h4(class = "font-bold text-slate-700 mb-2", "Positive reviews"),
               numericInput("form_positive", NULL, value = 0)
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Negative reviews"),
+              h4(class = "font-bold text-slate-700 mb-2", "Negative reviews"),
               numericInput("form_negative", NULL, value = 0)
             )
           ),
           div(class = "grid grid-cols-1 md:grid-cols-4 gap-4 mb-6",
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Windows"),
+              h4(class = "font-bold text-slate-700 mb-2", "Windows"),
               checkboxInput("form_windows", "Disponible", value = TRUE)
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Mac"),
+              h4(class = "font-bold text-slate-700 mb-2", "Mac"),
               checkboxInput("form_mac", "Disponible", value = FALSE)
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Linux"),
+              h4(class = "font-bold text-slate-700 mb-2", "Linux"),
               checkboxInput("form_linux", "Disponible", value = FALSE)
             ),
             div(
-              h4(class = "font-bold text-gray-800 mb-2", "Average playtime (hours)"),
+              h4(class = "font-bold text-slate-700 mb-2", "Average playtime (hours)"),
               numericInput("form_playtime", NULL, value = 0)
             )
           ),
           div(class = "flex gap-4",
-            actionButton("btn_submit_game", "✅ Ajouter à MongoDB", class = "bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg"),
-            actionButton("btn_reset_form", "🔄 Réinitialiser", class = "bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg")
+            actionButton("btn_submit_game", "Ajouter a MongoDB", class = "bg-green-600 text-white font-bold py-3 px-6 rounded-lg"),
+            actionButton("btn_reset_form", "Reinitialiser", class = "bg-gray-600 text-white font-bold py-3 px-6 rounded-lg")
           ),
           div(id = "form_message", class = "mt-6 p-4 rounded-lg", style = "display:none;")
         )
@@ -233,11 +265,25 @@ server <- function(input, output, session) {
       else if (input$platform_filter == "mac") data <- data %>% filter(Mac == 1)
       else if (input$platform_filter == "linux") data <- data %>% filter(Linux == 1)
     }
+    
+    if (!is.null(input$search_name) && input$search_name != "") {
+      data <- data %>% filter(grepl(tolower(input$search_name), tolower(Name), fixed = TRUE))
+    }
+    if (!is.null(input$search_developers) && input$search_developers != "") {
+      data <- data %>% filter(grepl(tolower(input$search_developers), tolower(Developers), fixed = TRUE))
+    }
+    if (!is.null(input$search_publishers) && input$search_publishers != "") {
+      data <- data %>% filter(grepl(tolower(input$search_publishers), tolower(Publishers), fixed = TRUE))
+    }
+    if (!is.null(input$search_categories) && input$search_categories != "") {
+      data <- data %>% filter(grepl(tolower(input$search_categories), tolower(Categories), fixed = TRUE))
+    }
+    
     return(data)
   })
   
   output$games_table <- renderDT({
-    datatable(filtered_data() %>% select(Name, Price, Metacritic_score, User_score, Release_date, Windows, Mac, Linux), options = list(pageLength = 10))
+    datatable(filtered_data(), options = list(pageLength = 10, scrollX = TRUE, autoWidth = TRUE))
   })
   
   output$count_games <- renderText(nrow(filtered_data()))
@@ -309,15 +355,12 @@ server <- function(input, output, session) {
     }
   })
   
-  # PAGE 4: FORMULAIRE D'AJOUT DE JEU
   observeEvent(input$btn_submit_game, {
-    # Validation
     if (input$form_name == "" || is.na(input$form_name)) {
       shinyjs::runjs("document.getElementById('form_message').style.display='block'; document.getElementById('form_message').style.backgroundColor='#fee'; document.getElementById('form_message').innerHTML='<strong style=\"color:red;\">Erreur: Le nom du jeu est obligatoire!</strong>';")
       return()
     }
     
-    # Créer le nouveau jeu
     new_game <- data.frame(
       AppID = as.numeric(input$form_appid),
       Name = input$form_name,
@@ -339,15 +382,12 @@ server <- function(input, output, session) {
       stringsAsFactors = FALSE
     )
     
-    # Insérer dans MongoDB
     tryCatch({
       db <- mongo(collection = COLLECTION_NAME, db = DB_NAME, url = MONGO_URL)
       db$insert(new_game)
       
-      # Message de succès
-      shinyjs::runjs("document.getElementById('form_message').style.display='block'; document.getElementById('form_message').style.backgroundColor='#efe'; document.getElementById('form_message').innerHTML='<strong style=\"color:green;\">✅ Jeu ajouté avec succès à MongoDB!</strong>';")
+      shinyjs::runjs("document.getElementById('form_message').style.display='block'; document.getElementById('form_message').style.backgroundColor='#efe'; document.getElementById('form_message').innerHTML='<strong style=\"color:green;\">Jeu ajoute avec succes a MongoDB!</strong>';")
       
-      # Réinitialiser le formulaire après 2 secondes
       shiny::invalidateLater(2000, session)
       
     }, error = function(e) {
@@ -355,7 +395,6 @@ server <- function(input, output, session) {
     })
   })
   
-  # Bouton Réinitialiser
   observeEvent(input$btn_reset_form, {
     updateNumericInput(session, "form_appid", value = 1)
     updateTextInput(session, "form_name", value = "")
