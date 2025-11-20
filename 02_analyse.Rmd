@@ -74,20 +74,24 @@ ggplot(games_by_year, aes(x = Year, y = Avg_Price)) +
 # 4. Analyse des scores
 
 ```{r scores_analysis}
-df$Metacritic.score <- as.numeric(df$Metacritic.score)
-df$User.score <- as.numeric(df$User.score)
+df_scores <- df %>% filter((!is.na(Metacritic.score) & Metacritic.score > 0) | (!is.na(User.score) & User.score > 0))
 
-mean(df$Metacritic.score, na.rm = TRUE)
-median(df$Metacritic.score, na.rm = TRUE)
-mean(df$User.score, na.rm = TRUE)
-median(df$User.score, na.rm = TRUE)
+df_scores$Metacritic.score <- as.numeric(df_scores$Metacritic.score)
+df_scores$User.score <- as.numeric(df_scores$User.score)
 
-valid_scores <- df %>% filter(!is.na(Metacritic.score) & !is.na(User.score))
+df_scores_clean <- df_scores %>% filter(Metacritic.score > 0 | User.score > 0)
+
+mean(df_scores_clean$Metacritic.score, na.rm = TRUE)
+median(df_scores_clean$Metacritic.score, na.rm = TRUE)
+mean(df_scores_clean$User.score, na.rm = TRUE)
+median(df_scores_clean$User.score, na.rm = TRUE)
+
+valid_scores <- df_scores_clean %>% filter(!is.na(Metacritic.score) & !is.na(User.score) & Metacritic.score > 0 & User.score > 0)
 if(nrow(valid_scores) > 0) {
   cor(valid_scores$Metacritic.score, valid_scores$User.score)
 }
 
-df_meta <- df %>% filter(!is.na(Metacritic.score))
+df_meta <- df_scores_clean %>% filter(!is.na(Metacritic.score) & Metacritic.score > 0)
 if(nrow(df_meta) > 0) {
   ggplot(df_meta, aes(x = Metacritic.score)) +
     geom_histogram(bins = 30, fill = "purple", color = "black") +
@@ -95,7 +99,7 @@ if(nrow(df_meta) > 0) {
     theme_minimal()
 }
 
-df_user <- df %>% filter(!is.na(User.score))
+df_user <- df_scores_clean %>% filter(!is.na(User.score) & User.score > 0)
 if(nrow(df_user) > 0) {
   ggplot(df_user, aes(x = User.score)) +
     geom_histogram(bins = 30, fill = "green", color = "black") +
@@ -287,12 +291,12 @@ ggplot(top_categories, aes(x = reorder(Category, Count), y = Count, fill = Categ
 # 12. Analyse comparative prix vs qualité
 
 ```{r price_quality_analysis}
-df_pq <- df %>% filter(!is.na(Price))
+df_pq <- df %>% filter(!is.na(Price) & Price > 0)
 
 df_pq$Price_Category <- cut(df_pq$Price, breaks = c(0, 10, 20, 50, Inf), labels = c("Budget", "Standard", "Premium", "Luxe"))
 
 price_quality <- df_pq %>% 
-  filter(!is.na(Price_Category) & !is.na(Metacritic.score)) %>%
+  filter(!is.na(Price_Category) & !is.na(Metacritic.score) & Metacritic.score > 0) %>%
   group_by(Price_Category) %>% 
   summarise(
     Avg_Metacritic = mean(Metacritic.score, na.rm = TRUE),
@@ -308,7 +312,9 @@ if(nrow(price_quality) > 0) {
     labs(title = "Score Metacritic moyen par catégorie de prix", x = "Catégorie", y = "Score") +
     theme_minimal() +
     guides(fill = "none")
+}
 
+if(nrow(price_quality) > 0) {
   ggplot(price_quality, aes(x = Price_Category, y = Avg_Playtime, fill = Price_Category)) +
     geom_bar(stat = "identity") +
     labs(title = "Temps de jeu moyen par catégorie de prix", x = "Catégorie", y = "Heures") +
@@ -368,8 +374,8 @@ if(nrow(platform_by_year) > 0) {
 
 # 15. Analyse de la qualité vs popularité
 
-```{r quality_vs_popularity}
-df_qvp <- df %>% filter(!is.na(Metacritic.score) & !is.na(Average.playtime.forever) & Average.playtime.forever > 0)
+```{r quality_analysis}
+df_quality <- df %>% filter(!is.na(Metacritic.score) & Metacritic.score > 0)
 
 if(nrow(df_qvp) > 0) {
   ggplot(df_qvp, aes(x = Metacritic.score, y = Average.playtime.forever, color = Price)) +
@@ -380,4 +386,17 @@ if(nrow(df_qvp) > 0) {
     theme_minimal() +
     scale_color_gradient(low = "lightgreen", high = "darkred")
 }
+
+df_qvp_user <- df %>% filter(!is.na(User.score) & User.score > 0 & !is.na(Average.playtime.forever) & Average.playtime.forever > 0)
+
+if(nrow(df_qvp_user) > 0) {
+  ggplot(df_qvp_user, aes(x = User.score, y = Average.playtime.forever, color = Price)) +
+    geom_point(alpha = 0.4, size = 2) +
+    geom_smooth(method = "lm", se = FALSE, color = "blue", linewidth = 1) +
+    ylim(0, 1000) +
+    labs(title = "Score Utilisateur vs Temps de jeu moyen", x = "Score Utilisateur", y = "Temps de jeu moyen (heures)", color = "Prix (€)") +
+    theme_minimal() +
+    scale_color_gradient(low = "lightgreen", high = "darkred")
+}
 ```
+
