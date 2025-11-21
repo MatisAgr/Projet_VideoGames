@@ -232,13 +232,20 @@ ui <- navbarPage(
 
 server <- function(input, output, session) {
   
+  data_refresh_trigger <- reactiveVal(0)
+  
+  games_data_reactive <- reactive({
+    data_refresh_trigger()
+    get_games_data()
+  })
+  
   output$top_10_table <- renderDT({
-    top_10 <- games_data %>% filter(!is.na(Metacritic_score)) %>% arrange(desc(Metacritic_score)) %>% head(10) %>% select(Name, Price, Metacritic_score, User_score, Release_date)
+    top_10 <- games_data_reactive() %>% filter(!is.na(Metacritic_score)) %>% arrange(desc(Metacritic_score)) %>% head(10) %>% select(Name, Price, Metacritic_score, User_score, Release_date)
     datatable(top_10, options = list(pageLength = 10, dom = 't'), colnames = c("Nom", "Prix", "Metacritic", "User", "Date"))
   })
   
   output$bottom_10_table <- renderDT({
-    bottom_10 <- games_data %>% filter(!is.na(Metacritic_score)) %>% arrange(Metacritic_score) %>% head(10) %>% select(Name, Price, Metacritic_score, User_score, Release_date)
+    bottom_10 <- games_data_reactive() %>% filter(!is.na(Metacritic_score) & Metacritic_score > 0) %>% arrange(Metacritic_score) %>% head(10) %>% select(Name, Price, Metacritic_score, User_score, Release_date)
     datatable(bottom_10, options = list(pageLength = 10, dom = 't'), colnames = c("Nom", "Prix", "Metacritic", "User", "Date"))
   })
   
@@ -246,7 +253,7 @@ server <- function(input, output, session) {
   
   filtered_data <- reactive({
     data_trigger()
-    data <- games_data %>% filter(Price <= input$price_filter, Metacritic_score >= input$score_filter | is.na(Metacritic_score))
+    data <- games_data_reactive() %>% filter(Price <= input$price_filter, Metacritic_score >= input$score_filter | is.na(Metacritic_score))
     if (input$platform_filter != "all") {
       if (input$platform_filter == "windows") data <- data %>% filter(Windows == 1)
       else if (input$platform_filter == "mac") data <- data %>% filter(Mac == 1)
@@ -281,37 +288,37 @@ server <- function(input, output, session) {
   observeEvent(input$btn_refresh, { data_trigger(data_trigger() + 1) })
   
   output$plot_price_dist <- renderPlot({
-    df <- games_data %>% filter(!is.na(Price))
+    df <- games_data_reactive() %>% filter(!is.na(Price))
     ggplot(df, aes(x = Price)) + geom_histogram(bins = 50, fill = "steelblue", color = "black") + xlim(0, 100) + labs(x = "Prix ($)", y = "Nombre") + theme_minimal()
   })
   
   output$plot_metacritic_dist <- renderPlot({
-    df <- games_data %>% filter(!is.na(Metacritic_score))
+    df <- games_data_reactive() %>% filter(!is.na(Metacritic_score) & Metacritic_score > 0)
     if(nrow(df) > 0) ggplot(df, aes(x = Metacritic_score)) + geom_histogram(bins = 30, fill = "purple", color = "black") + labs(x = "Score", y = "Nombre") + theme_minimal()
   })
   
   output$plot_games_by_year <- renderPlot({
-    df <- games_data %>% filter(!is.na(Release_date)) %>% mutate(Year = year(Release_date)) %>% group_by(Year) %>% summarise(Count = n(), .groups = 'drop')
+    df <- games_data_reactive() %>% filter(!is.na(Release_date)) %>% mutate(Year = year(Release_date)) %>% group_by(Year) %>% summarise(Count = n(), .groups = 'drop')
     ggplot(df, aes(x = Year, y = Count)) + geom_line(color = "steelblue", size = 1) + geom_point(size = 2) + labs(x = "Année", y = "Nombre") + theme_minimal()
   })
   
   output$plot_price_by_year <- renderPlot({
-    df <- games_data %>% filter(!is.na(Release_date) & !is.na(Price)) %>% mutate(Year = year(Release_date)) %>% group_by(Year) %>% summarise(Avg = mean(Price, na.rm = TRUE), .groups = 'drop')
+    df <- games_data_reactive() %>% filter(!is.na(Release_date) & !is.na(Price)) %>% mutate(Year = year(Release_date)) %>% group_by(Year) %>% summarise(Avg = mean(Price, na.rm = TRUE), .groups = 'drop')
     ggplot(df, aes(x = Year, y = Avg)) + geom_line(color = "orange", size = 1) + geom_point(size = 2) + labs(x = "Année", y = "Prix ($)") + theme_minimal()
   })
   
   output$plot_platform_count <- renderPlot({
-    df <- data.frame(Plateforme = c("Windows", "Mac", "Linux"), Count = c(sum(games_data$Windows == 1, na.rm = TRUE), sum(games_data$Mac == 1, na.rm = TRUE), sum(games_data$Linux == 1, na.rm = TRUE)))
+    df <- data.frame(Plateforme = c("Windows", "Mac", "Linux"), Count = c(sum(games_data_reactive()$Windows == 1, na.rm = TRUE), sum(games_data_reactive()$Mac == 1, na.rm = TRUE), sum(games_data_reactive()$Linux == 1, na.rm = TRUE)))
     ggplot(df, aes(x = Plateforme, y = Count, fill = Plateforme)) + geom_bar(stat = "identity") + labs(y = "Nombre") + theme_minimal() + guides(fill = "none")
   })
   
   output$plot_platform_price <- renderPlot({
-    df <- data.frame(Plateforme = c("Windows", "Mac", "Linux"), Prix = c(mean(games_data$Price[games_data$Windows == 1], na.rm = TRUE), mean(games_data$Price[games_data$Mac == 1], na.rm = TRUE), mean(games_data$Price[games_data$Linux == 1], na.rm = TRUE)))
+    df <- data.frame(Plateforme = c("Windows", "Mac", "Linux"), Prix = c(mean(games_data_reactive()$Price[games_data_reactive()$Windows == 1], na.rm = TRUE), mean(games_data_reactive()$Price[games_data_reactive()$Mac == 1], na.rm = TRUE), mean(games_data_reactive()$Price[games_data_reactive()$Linux == 1], na.rm = TRUE)))
     ggplot(df, aes(x = Plateforme, y = Prix, fill = Plateforme)) + geom_bar(stat = "identity") + labs(y = "Prix ($)") + theme_minimal() + guides(fill = "none")
   })
   
   output$plot_top_categories <- renderPlot({
-    df <- games_data %>% filter(!is.na(Categories))
+    df <- games_data_reactive() %>% filter(!is.na(Categories))
     if(nrow(df) > 0) {
       cats <- unlist(strsplit(df$Categories, ","))
       cats <- trimws(cats)
@@ -322,17 +329,17 @@ server <- function(input, output, session) {
   })
   
   output$plot_score_correlation <- renderPlot({
-    df <- games_data %>% filter(!is.na(Metacritic_score) & !is.na(User_score))
+    df <- games_data_reactive() %>% filter(!is.na(Metacritic_score) & !is.na(User_score))
     if(nrow(df) > 0) ggplot(df, aes(x = Metacritic_score, y = User_score)) + geom_point(alpha = 0.5, color = "red") + geom_smooth(method = "lm", se = TRUE, color = "blue") + labs(x = "Metacritic", y = "User") + theme_minimal()
   })
   
   output$plot_price_playtime <- renderPlot({
-    df <- games_data %>% filter(!is.na(Average_playtime_forever) & !is.na(Price) & Price > 0)
+    df <- games_data_reactive() %>% filter(!is.na(Average_playtime_forever) & !is.na(Price) & Price > 0)
     if(nrow(df) > 0) ggplot(df, aes(x = Price, y = Average_playtime_forever)) + geom_point(alpha = 0.5, color = "darkblue") + geom_smooth(method = "lm", se = TRUE, color = "red") + xlim(0, 100) + ylim(0, 500) + labs(x = "Prix ($)", y = "Heures") + theme_minimal()
   })
   
   output$plot_top_publishers <- renderPlot({
-    df <- games_data %>% filter(!is.na(Publishers))
+    df <- games_data_reactive() %>% filter(!is.na(Publishers))
     if(nrow(df) > 0) {
       pubs <- unlist(strsplit(df$Publishers, ","))
       pubs <- trimws(pubs)
@@ -375,7 +382,7 @@ server <- function(input, output, session) {
       
       shinyjs::runjs("document.getElementById('form_message').style.display='block'; document.getElementById('form_message').style.backgroundColor='#efe'; document.getElementById('form_message').innerHTML='<strong style=\"color:green;\">Jeu ajoute avec succes a MongoDB!</strong>';")
       
-      shiny::invalidateLater(2000, session)
+      data_refresh_trigger(data_refresh_trigger() + 1)
       
     }, error = function(e) {
       shinyjs::runjs(paste0("document.getElementById('form_message').style.display='block'; document.getElementById('form_message').style.backgroundColor='#fee'; document.getElementById('form_message').innerHTML='<strong style=\"color:red;\">Erreur MongoDB: ", gsub("'", "\\'", e$message), "</strong>';"))
